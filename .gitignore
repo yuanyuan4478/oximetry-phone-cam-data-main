@@ -47,3 +47,13 @@ Thumbs.db
 ##################
 
 
+
+# Model artifacts
+outputs/
+
+# Large raw assets
+data/raw-videos/
+tools/ffmpeg-8.0-essentials_build/
+tools/ffmpeg-release-essentials.zip
+modeling/outputs/
+*.mp4
