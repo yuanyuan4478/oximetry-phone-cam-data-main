@@ -257,6 +257,7 @@ def _plot_scatter_comparison(
     cbar.set_ticks([0, 1])
     cbar.set_ticklabels(["Below", "Above"])
     plt.tight_layout()
+    plt.text(0.99, 0.01, 'Models: Ridge | RandomForest | HistGradientBoosting', ha='right', va='bottom', transform=plt.gca().transAxes, fontsize=8, alpha=0.7)
     path = output_dir / "ridge_vs_randomforest_scatter.png"
     plt.savefig(path, dpi=150)
     plt.close()
@@ -277,6 +278,7 @@ def _plot_accuracy_bar(
     plt.ylim(0, 100)
     plt.title("Average per-subject classification accuracy")
     plt.tight_layout()
+    plt.text(0.99, 0.01, 'Models: Ridge | RandomForest | HistGradientBoosting', ha='right', va='bottom', transform=plt.gca().transAxes, fontsize=8, alpha=0.7)
     path = output_dir / "average_accuracy.png"
     plt.savefig(path, dpi=150)
     plt.close()
