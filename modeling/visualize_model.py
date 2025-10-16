@@ -11,19 +11,15 @@ import numpy as np
 from sklearn.ensemble import HistGradientBoostingClassifier, RandomForestClassifier
 from sklearn.linear_model import Ridge
 
+from dataset_utils import build_classification_datasets, fit_standardizer as fit_standardizer_cls, standardize as standardize_cls
 from train_linear_regression import (
     FEATURE_NAMES,
     SubjectDataset,
-    _fit_standardizer as _fit_standardizer_reg,
-    _standardize,
+    _fit_standardizer as fit_standardizer_reg,
+    _standardize as standardize_reg,
     collect_dataset,
     tune_ridge_alpha,
     _rescale_coefficients,
-)
-from train_logistic_regression import (
-    build_classification_datasets,
-    _fit_standardizer as _fit_standardizer_cls,
-    _standardize as _standardize_cls,
 )
 
 NEG_COLOR = "#d62728"
@@ -51,12 +47,12 @@ def _ridge_loso_predictions(
             [d.labels for d in datasets if d.subject_id != held_out.subject_id]
         )
 
-        mean, std = _fit_standardizer_reg(train_features)
-        train_scaled = _standardize(train_features, mean, std)
+        mean, std = fit_standardizer_reg(train_features)
+        train_scaled = standardize_reg(train_features, mean, std)
         model = Ridge(alpha=alpha)
         model.fit(train_scaled, train_labels)
 
-        test_scaled = _standardize(held_out.features, mean, std)
+        test_scaled = standardize_reg(held_out.features, mean, std)
         preds = model.predict(test_scaled)
         accuracy = float(
             ((preds >= threshold) == (held_out.labels >= threshold)).mean()
@@ -90,9 +86,9 @@ def _classifier_loso_predictions(
         )
 
         if scale:
-            mean, std = _fit_standardizer_cls(train_features)
-            train_scaled = _standardize_cls(train_features, mean, std)
-            test_scaled = _standardize_cls(held_out.features, mean, std)
+            mean, std = fit_standardizer_cls(train_features)
+            train_scaled = standardize_cls(train_features, mean, std)
+            test_scaled = standardize_cls(held_out.features, mean, std)
         else:
             mean = None
             std = None
@@ -192,11 +188,11 @@ def _plot_subject_timeseries(
             alpha=0.8,
         )
 
-        wrong_idx = np.where(~correct)[0]
-        if wrong_idx.size:
+        wrong_decisions = np.where(~correct)[0]
+        if wrong_decisions.size:
             ax1.scatter(
-                time_axis[wrong_idx],
-                np.full(wrong_idx.size, threshold),
+                time_axis[wrong_decisions],
+                np.full(wrong_decisions.size, threshold),
                 color=NEG_COLOR,
                 marker=style["marker"],
                 s=34,
@@ -392,9 +388,9 @@ def main() -> None:
 
     ridge_features_full = np.vstack([ds.features for ds in ridge_datasets])
     ridge_labels_full = np.concatenate([ds.labels for ds in ridge_datasets])
-    mean_reg_full, std_reg_full = _fit_standardizer_reg(ridge_features_full)
+    mean_reg_full, std_reg_full = fit_standardizer_reg(ridge_features_full)
     ridge_full = Ridge(alpha=best_alpha)
-    ridge_full.fit(_standardize(ridge_features_full, mean_reg_full, std_reg_full), ridge_labels_full)
+    ridge_full.fit(standardize_reg(ridge_features_full, mean_reg_full, std_reg_full), ridge_labels_full)
 
     intercept_ridge, coeffs_ridge = _rescale_coefficients(ridge_full, mean_reg_full, std_reg_full)
 

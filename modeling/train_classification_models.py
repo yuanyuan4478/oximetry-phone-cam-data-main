@@ -17,12 +17,7 @@ from sklearn.metrics import (
     roc_auc_score,
 )
 
-from train_logistic_regression import (
-    ClassificationDataset,
-    build_classification_datasets,
-    _fit_standardizer,
-    _standardize,
-)
+from dataset_utils import ClassificationDataset, build_classification_datasets, fit_standardizer, standardize
 
 
 ModelFactory = Callable[[], object]
@@ -43,8 +38,8 @@ def _evaluate_model(
     train_labels = np.concatenate([d.labels for d in datasets])
 
     if scale:
-        mean, std = _fit_standardizer(train_features)
-        train_scaled = _standardize(train_features, mean, std)
+        mean, std = fit_standardizer(train_features)
+        train_scaled = standardize(train_features, mean, std)
     else:
         mean = np.zeros(train_features.shape[1])
         std = np.ones(train_features.shape[1])
@@ -53,14 +48,17 @@ def _evaluate_model(
     model.fit(train_scaled, train_labels)
 
     for held_out in datasets:
-        mask = np.array([d.subject_id != held_out.subject_id for d in datasets])
-        train_subset = np.vstack([d.features for d, keep in zip(datasets, mask) if keep])
-        label_subset = np.concatenate([d.labels for d, keep in zip(datasets, mask) if keep])
+        train_subset = np.vstack(
+            [d.features for d in datasets if d.subject_id != held_out.subject_id]
+        )
+        label_subset = np.concatenate(
+            [d.labels for d in datasets if d.subject_id != held_out.subject_id]
+        )
 
         if scale:
-            mean, std = _fit_standardizer(train_subset)
-            train_scaled_cv = _standardize(train_subset, mean, std)
-            test_scaled = _standardize(held_out.features, mean, std)
+            mean, std = fit_standardizer(train_subset)
+            train_scaled_cv = standardize(train_subset, mean, std)
+            test_scaled = standardize(held_out.features, mean, std)
         else:
             mean = np.zeros(train_subset.shape[1])
             std = np.ones(train_subset.shape[1])
@@ -203,18 +201,9 @@ def main() -> None:
         ),
     ]
 
-    results_summary = {}
-
     for name, factory, scale in model_specs:
         cv_results, confusion, model, mean, std = _evaluate_model(name, datasets, factory, scale)
         _print_summary(name, cv_results, confusion)
-        results_summary[name] = {
-            "cv_results": cv_results,
-            "confusion": confusion,
-            "mean": mean,
-            "std": std,
-            "model": model,
-        }
 
         if args.output_dir:
             output_dir = args.output_dir if args.output_dir.is_absolute() else Path.cwd() / args.output_dir
