@@ -201,7 +201,7 @@ def _plot_subject_timeseries(
 
     ax1.set_xlabel("Seconds")
     ax1.set_ylabel("SpO₂ (%)")
-    ax1.set_title(f"Subject {subject_id}: Ridge vs RandomForest vs HistGradientBoosting")
+    ax1.set_title(f"Subject {subject_id}: Ridge vs tree classifiers")
 
     lines1, labels1 = ax1.get_legend_handles_labels()
     lines2, labels2 = ax2.get_legend_handles_labels()
@@ -251,7 +251,7 @@ def _plot_scatter_comparison(
     plt.axhline(0.5, color="#888", linestyle=":", linewidth=1, label="RF decision")
     plt.xlabel("Ridge predicted SpO₂ (%)")
     plt.ylabel("RandomForest P(low SpO₂)")
-    plt.title("Ridge vs RandomForest")
+    plt.title("Ridge vs Random Forest")
     plt.legend(loc="best", fontsize=9)
     cbar = plt.colorbar(scatter, label="Ground truth ≥ threshold")
     cbar.set_ticks([0, 1])
