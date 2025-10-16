@@ -224,7 +224,7 @@ def _plot_subject_timeseries(
         bbox={"facecolor": "white", "alpha": 0.8, "edgecolor": "none"},
     )
 
-    path = output_dir / f"subject_{subject_id}_comparison.png"
+    path = output_dir / f"subject_{subject_id}_timeseries_ridge_randomforest_histgradientboosting.png"
     fig.savefig(path, dpi=150)
     plt.close(fig)
     return path, stats
