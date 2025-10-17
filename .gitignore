@@ -57,3 +57,7 @@ tools/ffmpeg-8.0-essentials_build/
 tools/ffmpeg-release-essentials.zip
 modeling/outputs/
 *.mp4
+
+# Allow committed figures
+!figures/
+!figures/*.png
