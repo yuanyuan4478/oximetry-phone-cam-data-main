@@ -6,7 +6,7 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 import numpy as np
 from sklearn.linear_model import Ridge
-from sklearn.metrics import roc_curve, auc
+from sklearn.metrics import roc_curve, roc_auc_score
 
 from train_linear_regression import _fit_standardizer, _standardize, collect_dataset
 
@@ -44,7 +44,7 @@ def _plot_roc(labels: np.ndarray, preds: np.ndarray, thresholds: list[float], ou
     for thr, color, annot_y in zip(thresholds, COLORS, annotation_offsets):
         y_true = (labels < thr).astype(int)
         fpr, tpr, _ = roc_curve(y_true, preds)
-        roc_auc = auc(fpr, tpr)
+        roc_auc = roc_auc_score(y_true, preds)
         ax.plot(fpr, tpr, color=color, linewidth=2, label=f"<{int(thr)}%")
         ax.text(
             0.55,
@@ -97,7 +97,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--output",
         type=Path,
-        default=Path("figures/spo2_classification_roc.png"),
+        default=Path("figures/spo2_classification_roc_corrected.png"),
         help="Output figure path (default: figures/spo2_classification_roc.png)",
     )
     return parser.parse_args()
