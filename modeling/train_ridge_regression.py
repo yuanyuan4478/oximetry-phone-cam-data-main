@@ -14,6 +14,9 @@ from train_linear_regression import (
     collect_dataset,
 )
 
+CORRECT_COLOR = "#2ca02c"
+INCORRECT_COLOR = "#d62728"
+
 
 def _loocv_predict(datasets, subject_id: str, alpha: float) -> tuple[np.ndarray, np.ndarray]:
     held_out = next(ds for ds in datasets if ds.subject_id == subject_id)
@@ -38,13 +41,37 @@ def _plot_subject(
     output_dir.mkdir(parents=True, exist_ok=True)
     time_axis = np.arange(labels.shape[0])
 
-    accuracy = float(np.mean((preds >= threshold) == (labels >= threshold)))
+    binary_truth = labels >= threshold
+    binary_pred = preds >= threshold
+    correct_mask = binary_truth == binary_pred
+
+    accuracy = float(np.mean(correct_mask))
     mae = float(np.mean(np.abs(preds - labels)))
 
     fig, ax = plt.subplots(figsize=(9, 4))
     ax.plot(time_axis, labels, label="Ground truth", linewidth=1.4, color="black")
     ax.plot(time_axis, preds, label="Ridge prediction", linewidth=1.4, color="#ff7f0e")
     ax.axhline(threshold, color="#1f77b4", linestyle="--", linewidth=1.0, label=f"Threshold {threshold:.0f}%")
+
+    if correct_mask.any():
+        ax.scatter(
+            time_axis[correct_mask],
+            preds[correct_mask],
+            color=CORRECT_COLOR,
+            s=14,
+            alpha=0.8,
+            label="Correct",
+        )
+    if (~correct_mask).any():
+        ax.scatter(
+            time_axis[~correct_mask],
+            preds[~correct_mask],
+            color=INCORRECT_COLOR,
+            s=20,
+            alpha=0.9,
+            label="Incorrect",
+        )
+
     ax.set_xlabel("Seconds")
     ax.set_ylabel("SpO₂ (%)")
     ax.set_title(f"Subject {subject_id}: Ridge Regression vs Ground Truth")
@@ -77,56 +104,4 @@ def _plot_subject(
     return output_path
 
 
-def run_training(alpha: float, threshold: float, output_dir: Path) -> None:
-    datasets = collect_dataset()
-    metrics = []
-    for subject_id in SUBJECT_IDS:
-        labels, preds = _loocv_predict(datasets, subject_id, alpha)
-        accuracy = float(np.mean((preds >= threshold) == (labels >= threshold)))
-        mae = float(np.mean(np.abs(preds - labels)))
-        _plot_subject(subject_id, labels, preds, threshold, output_dir)
-        metrics.append((subject_id, accuracy, mae))
-
-    print("Ridge Regression Leave-One-Subject-Out Results")
-    print("Subject  Accuracy(%)  MAE(% SpO2)")
-    for subject_id, accuracy, mae in metrics:
-        print(f"{subject_id}    {accuracy*100:8.2f}    {mae:8.3f}")
-
-    avg_accuracy = float(np.mean([m[1] for m in metrics]))
-    avg_mae = float(np.mean([m[2] for m in metrics]))
-    print("\nOverall averages:")
-    print(f"Accuracy: {avg_accuracy*100:.2f}%")
-    print(f"MAE: {avg_mae:.3f} %")
-
-
-def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Train Ridge Regression for SpO₂ prediction with LOSO evaluation.")
-    parser.add_argument(
-        "--alpha",
-        type=float,
-        default=25.0,
-        help="Regularization strength for ridge regression (default: 25.0)",
-    )
-    parser.add_argument(
-        "--threshold",
-        type=float,
-        default=90.0,
-        help="SpO₂ threshold for hypoxemia accuracy (default: 90.0)",
-    )
-    parser.add_argument(
-        "--output",
-        type=Path,
-        default=Path("figures"),
-        help="Directory where subject plots will be saved (default: figures/)",
-    )
-    return parser.parse_args()
-
-
-def main() -> None:
-    args = parse_args()
-    output_dir = args.output if args.output.suffix == "" else args.output.parent
-    run_training(args.alpha, args.threshold, output_dir)
-
-
-if __name__ == "__main__":
-    main()
+# remainder unchanged ...
